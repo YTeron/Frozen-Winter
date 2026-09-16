@@ -1,8 +1,10 @@
 package net.yteron.BWaC.cold_system;
 
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.world.ChunkDataEvent;
 import net.minecraftforge.event.world.WorldEvent;
@@ -16,7 +18,7 @@ public class TempChunkSimple extends TempChunkHandler {
     @Override
     public void updateSystem() {
         for(Map.Entry<World, TemChunk> entry : perWorld.entrySet()) {
-
+            World world= entry.getKey();
             Map<ChunkPos, Float> temp = entry.getValue().temp;
             Map<ChunkPos, Float> buff = new HashMap<>(temp);
             temp.clear();
@@ -26,23 +28,25 @@ public class TempChunkSimple extends TempChunkHandler {
                     continue;
                 ChunkPos coord = chunk.getKey();
 
+
                 for (int i = -1; i <= 1; i++) {
                     for (int j = -1; j <= 1; j++) {
-                        float percent;
-                        if (i == 0 && j == 0)      percent = 1.0f;
-                        else if (i == 0 || j == 0) percent = 0.25f;
-                        else                        percent = 0.125f;
-
+                        if (j == 0&& i ==0) continue;
                         ChunkPos newCoord = new ChunkPos(coord.x+i,coord.z+j);
-                        if(buff.containsKey(newCoord)) {
+                        Biome biome = world.getBiome(newCoord.getWorldPosition());
+                        ResourceLocation resourceLocation = biome.getRegistryName();
 
-                            Float val = temp.get(newCoord);
+                        if(buff.containsKey(newCoord)) {
+                            Float val = buff.get(newCoord);
+                            Float thisVal = buff.get(coord);
                             float temputer = val == null ? 0 : val;
-                            float newTemp = temputer + chunk.getValue() * percent;
-                            if(temputer<newTemp)
+                            float thisTemputer = thisVal == null ? 0 : thisVal;
+                            float newTemp = temputer+thisTemputer/2;
+                            if (Math.abs(temputer)-Math.abs(thisTemputer)>3 ) {
                                 temp.put(newCoord, newTemp);
+                            }
                         } else {
-                            temp.put(newCoord, chunk.getValue() * percent);
+                            temp.put(newCoord, chunk.getValue());
                         }
                     }
                 }

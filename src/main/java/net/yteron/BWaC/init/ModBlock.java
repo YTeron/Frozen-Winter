@@ -13,6 +13,6 @@ public class ModBlock {
 
     }
     public static void register(IEventBus eventBus) {
-        BLOCK.register(eventBus); // <-- Исправлено: убраны лишние скобки
+        BLOCK.register(eventBus);
     }
 }

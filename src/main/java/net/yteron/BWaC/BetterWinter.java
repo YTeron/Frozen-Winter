@@ -2,24 +2,33 @@ package net.yteron.BWaC;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.InterModComms;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
+import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.yteron.BWaC.cold_system.BiomeRegestry;
+import net.yteron.BWaC.config.ModServersConfig;
 import net.yteron.BWaC.init.ModBlock;
 import net.yteron.BWaC.init.ModItem;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import static net.yteron.BWaC.config.ModServersConfig.forRegistry;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(BetterWinter.MOD_ID)
@@ -32,7 +41,7 @@ public class BetterWinter
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
         ModBlock.register(eventBus);
         ModItem.register(eventBus);
-
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ModServersConfig.SPEC);
 
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
@@ -58,7 +67,23 @@ public class BetterWinter
         // do something that can only be done on the client
         LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().options);
     }
+    @SubscribeEvent
+    public void onServerAboutToStart(FMLServerAboutToStartEvent event) {
+        ModServersConfig.forRegistry();
+        BiomeRegestry.init();
+        LOGGER.info("Temperature system initialized");
+        Map<ResourceLocation, Float> temps = ModServersConfig.getTempFromBiomse();
+        LOGGER.info("=== Biome temperatures ({} entries) ===", temps.size());
+        for (Map.Entry<ResourceLocation, Float> entry : temps.entrySet()) {
+            LOGGER.info("  {} = {}", entry.getKey(), entry.getValue());
+        }
 
+
+        LOGGER.info("=== ALL_BIOMES ({} entries) ===", BiomeRegestry.ALL_BIOMES.size());
+        for (Map.Entry<ResourceLocation, Float> entry : BiomeRegestry.ALL_BIOMES.entrySet()) {
+            LOGGER.info("  {} = {}", entry.getKey(), entry.getValue());
+        }
+    }
     private void enqueueIMC(final InterModEnqueueEvent event)
     {
         // some example code to dispatch IMC to another mod
@@ -75,7 +100,6 @@ public class BetterWinter
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
     public void onServerStarting(FMLServerStartingEvent event) {
-        // do something when the server starts
         LOGGER.info("HELLO from server starting");
     }
 

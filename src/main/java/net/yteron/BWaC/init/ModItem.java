@@ -13,6 +13,6 @@ public class ModItem {
 
     }
     public static void register(IEventBus eventBus) {
-        ITEMS.register(eventBus); // <-- Исправлено: убраны лишние скобки
+        ITEMS.register(eventBus);
     }
 }
