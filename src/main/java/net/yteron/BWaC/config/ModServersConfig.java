@@ -37,8 +37,17 @@ public class ModServersConfig {
         if (!BIOMES.get().isEmpty()) return;
         List<String>list = new ArrayList<>();
         for (Biome biome : ForgeRegistries.BIOMES) {
-            if (biome.getRegistryName() != null)
-                list.add(biome.getRegistryName()+"=0.0");
+            switch (biome.getBiomeCategory()){
+                case ICY:  list.add(biome.getRegistryName()+"=-10.0");break;
+                case MESA: list.add(biome.getRegistryName()+"=30.0");break;
+                case BEACH: list.add(biome.getRegistryName()+"=25.0");break;
+                case OCEAN: list.add(biome.getRegistryName()+"=10.0");break;
+                case TAIGA: list.add(biome.getRegistryName()+"=35.0");break;
+                case SWAMP: list.add(biome.getRegistryName()+"=20.0");break;
+                case PLAINS: list.add(biome.getRegistryName()+"=22.5");break;
+                case NETHER: list.add(biome.getRegistryName()+"=66.6");break;
+                default: list.add(biome.getRegistryName()+"=0.0");break;
+            }
         }
         BIOMES.set(list);
         SPEC.save();
