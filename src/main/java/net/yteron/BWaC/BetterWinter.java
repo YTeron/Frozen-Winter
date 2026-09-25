@@ -18,17 +18,17 @@ import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.yteron.BWaC.cold_system.BiomeRegestry;
+import net.yteron.BWaC.cold_system.TempManager;
 import net.yteron.BWaC.config.ModServersConfig;
 import net.yteron.BWaC.init.ModBlock;
 import net.yteron.BWaC.init.ModItem;
+import net.yteron.BWaC.init.ModTab;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static net.yteron.BWaC.config.ModServersConfig.forRegistry;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(BetterWinter.MOD_ID)
@@ -41,7 +41,9 @@ public class BetterWinter
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
         ModBlock.register(eventBus);
         ModItem.register(eventBus);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ModServersConfig.SPEC);
+
+
+        MinecraftForge.EVENT_BUS.register(new TempManager());
 
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
@@ -52,6 +54,9 @@ public class BetterWinter
         // Register the doClientStuff method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
 
+
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ModServersConfig.SPEC,"better_winter-server-temps.toml");
+
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
     }
@@ -61,6 +66,7 @@ public class BetterWinter
         // some preinit code
         LOGGER.info("HELLO FROM PREINIT");
         LOGGER.info("DIRT BLOCK >> {}", Blocks.DIRT.getRegistryName());
+
     }
 
     private void doClientStuff(final FMLClientSetupEvent event) {
@@ -69,20 +75,7 @@ public class BetterWinter
     }
     @SubscribeEvent
     public void onServerAboutToStart(FMLServerAboutToStartEvent event) {
-        ModServersConfig.forRegistry();
-        BiomeRegestry.init();
-        LOGGER.info("Temperature system initialized");
-        Map<ResourceLocation, Float> temps = ModServersConfig.getTempFromBiomse();
-        LOGGER.info("=== Biome temperatures ({} entries) ===", temps.size());
-        for (Map.Entry<ResourceLocation, Float> entry : temps.entrySet()) {
-            LOGGER.info("  {} = {}", entry.getKey(), entry.getValue());
-        }
 
-
-        LOGGER.info("=== ALL_BIOMES ({} entries) ===", BiomeRegestry.ALL_BIOMES.size());
-        for (Map.Entry<ResourceLocation, Float> entry : BiomeRegestry.ALL_BIOMES.entrySet()) {
-            LOGGER.info("  {} = {}", entry.getKey(), entry.getValue());
-        }
     }
     private void enqueueIMC(final InterModEnqueueEvent event)
     {

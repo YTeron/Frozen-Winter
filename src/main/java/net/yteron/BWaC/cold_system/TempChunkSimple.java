@@ -1,103 +1,109 @@
 package net.yteron.BWaC.cold_system;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.material.Material;
+import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.gen.Heightmap;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.world.ChunkDataEvent;
+import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.yteron.BWaC.cold_system.TempChunkHandler;
+import net.yteron.BWaC.config.ModServersConfig;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TempChunkSimple extends TempChunkHandler {
-    private Map<World,TemChunk> perWorld  =new HashMap<>();
-    private static final String NBT_KEY_CHUNK_TEMP = "chunk_temp";
+
+    private Map<World, tempChunk> perWorld = new HashMap<>();
+    private static final float maxRad = 100_000F;
+    private static final String NBT_KEY_CHUNK_RADIATION = "chunk_radiation";
+    private int ticks=0;
     @Override
     public void updateSystem() {
-        for(Map.Entry<World, TemChunk> entry : perWorld.entrySet()) {
-            World world= entry.getKey();
-            Map<ChunkPos, Float> temp = entry.getValue().temp;
-            Map<ChunkPos, Float> buff = new HashMap<>(temp);
-            temp.clear();
+        for(Map.Entry<World, tempChunk> entry : perWorld.entrySet()) {
+            World world = entry.getKey();
+            Map<ChunkPos, Float> radiation = entry.getValue().temp;
+            Map<ChunkPos, Float> buff = new HashMap<>(radiation);
+            radiation.clear();
 
             for (Map.Entry<ChunkPos, Float> chunk : buff.entrySet()) {
-                if (chunk.getValue() == 0)
-                    continue;
                 ChunkPos coord = chunk.getKey();
-
-
-                for (int i = -1; i <= 1; i++) {
-                    for (int j = -1; j <= 1; j++) {
-                        if (j == 0&& i ==0) continue;
-                        ChunkPos newCoord = new ChunkPos(coord.x+i,coord.z+j);
-                        Biome biome = world.getBiome(newCoord.getWorldPosition());
-                        ResourceLocation resourceLocation = biome.getRegistryName();
-
-                        if(buff.containsKey(newCoord)) {
-                            Float val = buff.get(newCoord);
-                            Float thisVal = buff.get(coord);
-                            float temputer = val == null ? 0 : val;
-                            float thisTemputer = thisVal == null ? 0 : thisVal;
-                            float newTemp = temputer+thisTemputer/2;
-                            if (Math.abs(temputer)-Math.abs(thisTemputer)>3 ) {
-                                temp.put(newCoord, newTemp);
-                            }
-                        } else {
-                            temp.put(newCoord, chunk.getValue());
-                        }
-                    }
-                }
+                Biome biome = world.getBiome(coord.getWorldPosition());
+                ResourceLocation resourceLocation = biome.getRegistryName();
+                Float temp = chunk.getValue() ==null? ModServersConfig.getFloatTemp(resourceLocation.toString()):chunk.getValue();
+                if (chunk.getValue() ==ModServersConfig.getFloatTemp(resourceLocation.toString()))
+                    continue;
+                radiation.put(coord, temp);
             }
-
         }
     }
 
+
     @Override
     public float getTemp(World world, int x, int y, int z) {
+
         if(!world.isClientSide)
         {
-            TemChunk tempWorld = perWorld.get(world);
-            if (tempWorld == null) return 0;
+            BlockPos pos = new BlockPos(x, y, z);
+            Biome biome = world.getBiome(pos);
+            ResourceLocation id = biome.getRegistryName();
+            tempChunk radWorld = perWorld.get(world);
+            if (radWorld == null) return 0;
             ChunkPos chunkPos = new ChunkPos(x >> 4, z >> 4);
-            Float temputer = tempWorld.temp.get(chunkPos);
-            if (temputer == null) {
-                return 0;
+            Float rad = radWorld.temp.get(chunkPos);
+            if (rad == null) {
+                return ModServersConfig.getFloatTemp(id.toString());
             }
-//            System.out.println("📊 [ПОЛУЧЕНИЕ] Чанк " + chunkPos + " → " + String.format("%.2f", temputer) + " temp");
-            return temputer;
+//            System.out.println("📊 [ПОЛУЧЕНИЕ] Чанк " + chunkPos + " → " + String.format("%.2f", rad) + " рад");
+            return rad;
         }
         return 0;
     }
 
     @Override
-    public void setTemp(World world, int x, int y, int z, float temputer) {
+    public void setTemp(World world, int x, int y, int z, float rad) {
         if(!world.isClientSide)
         {
             BlockPos pos = new BlockPos(x, 0, z);
             if (!world.isLoaded(pos)) return;
 
             ChunkPos chunkPos = new ChunkPos(x >> 4, z >> 4);
-            TemChunk tempWorld = perWorld.computeIfAbsent(world,
-                    k -> new TemChunk());
-            if (temputer < 0.05f) {
-                tempWorld.temp.remove(chunkPos);
-            } else {
-                tempWorld.temp.put(chunkPos,temputer);
-            }
+            tempChunk radWorld = perWorld.computeIfAbsent(world,
+                    k -> new tempChunk());
+                radWorld.temp.put(chunkPos,rad);
             world.getChunk(chunkPos.x, chunkPos.z).markUnsaved();
         }
     }
 
     @Override
-    public void incrementTemp(World world, int x, int y, int z, float temputer) {
-
+    public void incrementTemp(World world, int x, int y, int z, float rad) {
+        float current = getTemp(world, x, y, z);
+        setTemp(world, x, y, z, current + rad);
     }
 
     @Override
-    public void decrementTemp(World world, int x, int y, int z, float temputer) {
+    public void decrementTemp(World world, int x, int y, int z, float rad) {
+        float current = getTemp(world, x, y, z);
+        setTemp(world, x, y, z, current - rad);
 
     }
 
@@ -105,14 +111,13 @@ public class TempChunkSimple extends TempChunkHandler {
     public void clearSystem(World world) {
 
     }
-    public class TemChunk{
-        public Map<ChunkPos, Float> temp = new HashMap<>();
-    }
+
+
     @Override
     public void receiveWorldLoad(WorldEvent.Load event) {
         World world =(World) event.getWorld();
         if(world.isClientSide) return;
-        perWorld.put(world, new TemChunk());
+        perWorld.put(world, new tempChunk());
         System.out.println("🌍 [ЗАГРУЗКА МИРА] " + world.dimension().location() +
                 " (ID: " + world.dimension().location() + ")");
     }
@@ -121,7 +126,7 @@ public class TempChunkSimple extends TempChunkHandler {
     public void receiveWorldUnload(WorldEvent.Unload event) {
         World world =(World) event.getWorld();
         if(world.isClientSide) return;
-        TemChunk radWorld = perWorld.get(world);
+        tempChunk radWorld = perWorld.get(world);
         int chunkCount = radWorld != null ? radWorld.temp.size() : 0;
         perWorld.remove(world);
         System.out.println("🌍 [ВЫГРУЗКА МИРА] " + world.dimension().location() +
@@ -137,30 +142,61 @@ public class TempChunkSimple extends TempChunkHandler {
         if (event.getChunk() == null) return;
         if(!world.isClientSide) {
 
-            TemChunk radWorld = perWorld.computeIfAbsent(world,
-                    k -> new TemChunk());
+            tempChunk radWorld = perWorld.computeIfAbsent(world,
+                    k -> new tempChunk());
 
-            float temputer = event.getData().getFloat(NBT_KEY_CHUNK_TEMP);
-            if (temputer > 0) {
-                radWorld.temp.put(event.getChunk().getPos(), temputer);
-                //System.out.println("мир "+world+" позиция "+event.getChunk().getPos()+" радиация " +String.format("%.2f", temputer));
+            float rad = event.getData().getFloat(NBT_KEY_CHUNK_RADIATION);
+            if (rad > 0) {
+                radWorld.temp.put(event.getChunk().getPos(), rad);
+                //System.out.println("мир "+world+" позиция "+event.getChunk().getPos()+" радиация " +String.format("%.2f", rad));
             }
         }
     }
     public void receiveChunkSave(ChunkDataEvent.Save event) {
         World world =(World) event.getWorld();
         if(!world.isClientSide) {
-            TemChunk radWorld = perWorld.get(world);
+            tempChunk radWorld = perWorld.get(world);
 
             if(radWorld != null) {
                 Float val = radWorld.temp.get(event.getChunk().getPos());
-                float temputer = val == null ? 0F : val;
-                if (temputer >-0.5F) {
-                    event.getData().putFloat(NBT_KEY_CHUNK_TEMP, temputer);
-//                    System.out.println("💾 [СОХРАНЕНИЕ ЧАНКА] " + event.getChunk().getPos() + " радиация " +
-//                            String.format("%.2f", temputer));
+                float rad = val == null ? 0f : val;
+                if (rad != 0f) {
+                    event.getData().putFloat(NBT_KEY_CHUNK_RADIATION, rad); System.out.println("💾 [СОХРАНЕНИЕ ЧАНКА] " + event.getChunk().getPos() + " радиация " +
+                            String.format("%.2f", rad));
                 }
+
+//
             }
         }
     }
+    public void receiveChunkUnload(ChunkEvent.Unload event) {
+        World world =(World) event.getWorld();
+        if(!world.isClientSide) {
+            tempChunk radWorld = perWorld.get(world);
+
+            if(radWorld != null) {
+                radWorld.temp.remove(event.getChunk().getPos());
+            }
+        }
+    }
+    public static class tempChunk{
+        public Map<ChunkPos, Float> temp = new HashMap<>();
+    }
+
+//    @Override
+//    public void playerTick(TickEvent.PlayerTickEvent event) {
+//        World world =event.player.getCommandSenderWorld();
+//        PlayerEntity player = event.player;
+//        ticks +=1;
+//        for (int i = 0; i < ticks; i++) {
+//            if (!world.isClientSide) {
+//                float temp = getTemp(world, (int) player.getX(), 0, (int) player.getZ());
+//
+//                String message = "🌡️ Температура в чанке: " + String.format("%.2f", temp);
+//
+//                player.sendMessage(new StringTextComponent(message), Util.NIL_UUID);
+//                ticks=0;
+//            }
+//        }
+//    }
 }

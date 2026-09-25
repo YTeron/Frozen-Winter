@@ -14,12 +14,14 @@ public abstract class TempChunkHandler {
     public abstract void decrementTemp(World world, int x, int y, int z, float rad);
     public abstract void clearSystem(World world);
 //    public abstract void handleWorldDestruction();
+
     /*
      * Proxy'd event handlers
      */
     public void receiveWorldLoad(WorldEvent.Load event) { }
     public void receiveWorldUnload(WorldEvent.Unload event) { }
     public void receiveWorldTick(TickEvent.ServerTickEvent event) { }
+//    public void playerTick(TickEvent.PlayerTickEvent event) { }
 
     public void receiveChunkLoad(ChunkDataEvent.Load event) { }
     public void receiveChunkSave(ChunkDataEvent.Save event) { }

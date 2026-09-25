@@ -12,6 +12,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ToolType;
+import net.yteron.BWaC.cold_system.TempChunkSimple;
+import net.yteron.BWaC.cold_system.TempManager;
 //import net.yteron.nucrad.radiation.ChunkRaditonManager;
 
 public class ClimbingRope extends Block {
@@ -31,15 +33,14 @@ public class ClimbingRope extends Block {
     @Override
     public void onPlace(BlockState state, World world, BlockPos pos, BlockState oldState, boolean isMoving) {
         if (!world.isClientSide) {
-            float radLevel = 50.0F;
-//            ChunkRaditonManager.proxy.setRadiation(world, pos.getX(), pos.getY(), pos.getZ(), radLevel);
+            TempManager.proxy.incrementTemp(world, pos.getX(), pos.getY(), pos.getZ(), -1.0F);
         }
     }
 
     @Override
     public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!world.isClientSide && newState.getBlock() != this) {
-//            ChunkRaditonManager.proxy.decrementRad(world, pos.getX(), pos.getY(), pos.getZ(), 5.0F);
+            TempManager.proxy.decrementTemp(world, pos.getX(), pos.getY(), pos.getZ(), 1.0F);
         }
         super.onRemove(state, world, pos, newState, isMoving);
     }
