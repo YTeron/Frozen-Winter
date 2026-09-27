@@ -40,7 +40,7 @@ public class ClimbingRope extends Block {
     @Override
     public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!world.isClientSide && newState.getBlock() != this) {
-            TempManager.proxy.decrementTemp(world, pos.getX(), pos.getY(), pos.getZ(), 1.0F);
+            TempManager.proxy.decrementTemp(world, pos.getX(), pos.getY(), pos.getZ(), -1.0F);
         }
         super.onRemove(state, world, pos, newState, isMoving);
     }

@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 @Mod(BetterWinter.MOD_ID)
 public class BetterWinter
 {
+
     public static final String MOD_ID ="better_winter";
     private static final Logger LOGGER = LogManager.getLogger();
 
