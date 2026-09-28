@@ -6,12 +6,14 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.SoundType;
 import net.minecraft.entity.Pose;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.state.BooleanProperty;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ToolType;
+import net.yteron.BWaC.block.system.ClimbingSystem;
 import net.yteron.BWaC.cold_system.TempChunkSimple;
 import net.yteron.BWaC.cold_system.TempManager;
 //import net.yteron.nucrad.radiation.ChunkRaditonManager;
@@ -47,13 +49,15 @@ public class ClimbingRope extends Block {
 
     @Override
     public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult blockRayTraceResult) {
-        if (!world.isClientSide) {
-            double targetX = pos.getX() + 0.5D;
-            double targetY = pos.getY() + 0.0D;
-            double targetZ = pos.getZ() + 0.5D;
-            player.setPos(targetX, targetY, targetZ);
-            player.setForcedPose(Pose.CROUCHING);
+        if (hand != Hand.MAIN_HAND) return ActionResultType.PASS;
+
+        if (world.isClientSide) {
+            return ActionResultType.SUCCESS;
         }
+        ClimbingSystem system = new ClimbingSystem(pos, player,true);
+        system.startClimbing();
+
+        if(player.isShiftKeyDown()) system.stopClimbing();
         return ActionResultType.SUCCESS;
     }
 }
