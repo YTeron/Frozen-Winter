@@ -19,6 +19,7 @@ import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.yteron.BWaC.cold_system.TempManager;
+import net.yteron.BWaC.config.Configuration;
 import net.yteron.BWaC.config.ModServersConfig;
 import net.yteron.BWaC.init.ModBlock;
 import net.yteron.BWaC.init.ModItem;
@@ -57,6 +58,8 @@ public class BetterWinter
 
 
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ModServersConfig.SPEC,"better_winter-server-temps.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Configuration.CONFIG_SPEC,"better_winter-server-temps.toml");
+
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);

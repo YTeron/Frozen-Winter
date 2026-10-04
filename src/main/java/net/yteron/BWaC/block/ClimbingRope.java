@@ -4,6 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SoundType;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.Pose;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.state.BooleanProperty;
@@ -12,7 +13,9 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
+import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.common.ToolType;
+import net.yteron.BWaC.block.system.ClimbingEntity;
 import net.yteron.BWaC.block.system.ClimbingSystem;
 import net.yteron.BWaC.cold_system.TempChunkSimple;
 import net.yteron.BWaC.cold_system.TempManager;
@@ -50,14 +53,17 @@ public class ClimbingRope extends Block {
     @Override
     public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult blockRayTraceResult) {
         if (hand != Hand.MAIN_HAND) return ActionResultType.PASS;
+        if (player.isShiftKeyDown()) return ActionResultType.PASS;
+        if (!world.isClientSide) {
 
-        if (world.isClientSide) {
-            return ActionResultType.SUCCESS;
+            BlockPos sitPos = pos.above();
+            ClimbingEntity entity = new ClimbingEntity(world, sitPos);
+            world.addFreshEntity(entity);
+
+            player.startRiding(entity);
         }
-        ClimbingSystem system = new ClimbingSystem(pos, player,true);
-        system.startClimbing();
-
-        if(player.isShiftKeyDown()) system.stopClimbing();
+        player.setForcedPose(Pose.SWIMMING);
         return ActionResultType.SUCCESS;
     }
+
 }
