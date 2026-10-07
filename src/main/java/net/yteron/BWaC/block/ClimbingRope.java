@@ -62,7 +62,6 @@ public class ClimbingRope extends Block {
 
             player.startRiding(entity);
         }
-        player.setForcedPose(Pose.SWIMMING);
         return ActionResultType.SUCCESS;
     }
 

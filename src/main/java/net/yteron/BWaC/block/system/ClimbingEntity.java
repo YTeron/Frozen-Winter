@@ -55,6 +55,14 @@ public class ClimbingEntity extends Entity {
         }
         return ActionResultType.SUCCESS;
     }
+
+    @Override
+    protected void addPassenger(Entity p_184200_1_) {
+        super.addPassenger(p_184200_1_);
+        if (p_184200_1_ instanceof PlayerEntity) {
+            ((PlayerEntity) p_184200_1_).setForcedPose(Pose.SWIMMING);
+        }
+    }
     @Override
     public IPacket<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);

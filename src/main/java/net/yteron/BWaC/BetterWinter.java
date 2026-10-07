@@ -58,7 +58,7 @@ public class BetterWinter
 
 
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ModServersConfig.SPEC,"better_winter-server-temps.toml");
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Configuration.CONFIG_SPEC,"better_winter-server-temps.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Configuration.CONFIG_SPEC,"configuration-climbing.toml");
 
 
         // Register ourselves for server and other game events we are interested in
